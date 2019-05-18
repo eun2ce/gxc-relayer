@@ -19,9 +19,8 @@ if( file.get("node.dirty") === true ) {
       const actionReader = new NodeosActionReader({
          startAtBlock: file.get("node.startAtBlock") === null ? 0 : file.get("node.startAtBlock"),
          onlyIrreversible: false,
-         nodeosEndpoint: "http://127.0.0.1:9999",
+         nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
       });
-      console.info("startAtBlock: ",actionReader.startAtBlock);
 
       const actionWatcher = new BaseActionWatcher(
          actionReader,
@@ -29,6 +28,7 @@ if( file.get("node.dirty") === true ) {
          250,
       );
       actionWatcher.watch();
+      console.info("actionWatcher data: \n", actionWatcher);
    } catch(e) {
       console.info({e});
    };
