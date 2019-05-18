@@ -7,13 +7,9 @@ const { web3, ethContract } = require("./handlerVersions/v1/web3");
 const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json");
 
-try {
-   if( file.get("dirty") === true ) {
-      throw new Error ("dirty!");
-   }
-   file.set("node-dirty", true);
-} catch (error) {
-   console.info({error});
+if( file.get("node.dirty") === true ) {
+   console.warn("=== node is dirty ! ===\n dirty is", file.get("node.dirty"));
+   process.exit(1);
 }
 
 (async() => {
@@ -21,10 +17,11 @@ try {
    const actionHandler = new ObjectActionHandler([handlerVersion]);
 
    const actionReader = new NodeosActionReader({
-      //startAtBlock: file.get("startAtBlock") === null ? 0 : file.get("startAtBlock") ,
-         onlyIrreversible: false,
-         nodeosEndpoint: "http://127.0.0.1:9999",
+      startAtBlock: file.get("node.startAtBlock") === null ? 0 : file.get("node.startAtBlock"),
+      onlyIrreversible: false,
+      nodeosEndpoint: "http://127.0.0.1:9999",
    });
+   console.info("startAtBlock: ",actionReader.startAtBlock);
 
    const actionWatcher = new BaseActionWatcher(
          actionReader,
@@ -37,31 +34,35 @@ try {
    };
 })()
 
+// error handle
+process.on('uncaughtException', function (err)
+{
+	setTimeout( function() {
+		logger.error("*uncaughtException(), Exception : " + err.stack);
+		process.exit(1);
+	}, 1000);
+})
+
 if (process.platform === "win32") {
-  var rl = require("readline").createInterface({
+  const rl = require("readline").createInterface({
     input: process.stdin,
     output: process.stdout
   });
 
   rl.on("SIGINT", function () {
    console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
-
-   console.log("Exiting...");
+   process.kill(process.pid, 'SIGINT');
    process.exit(0);
   });
 }
 
 process.on('SIGINT', function () {
    console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
-   console.log(file.get());
-
-   console.log("Exiting...");
    process.kill(process.pid, 'SIGINT');
    process.exit(0);
 });
 
 process.on('SIGTERM', function () {
    console.log("\nGracefully shutting down from SIGTERM");
-   console.log(file.get());
    process.exit(0);
 });

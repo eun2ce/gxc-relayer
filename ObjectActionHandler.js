@@ -24,7 +24,6 @@ class ObjectActionHandler extends AbstractActionHandler {
       file.set("dirty", false);
       file.set("startAtBlock", state.indexState.blockNumber);
       file.save();
-      console.info("file: ", file);
       const { blockNumber } = state.indexState
       stateHistory[blockNumber] = JSON.parse(JSON.stringify(state))
       if (blockNumber > stateHistoryMaxLength && stateHistory[blockNumber - stateHistoryMaxLength]) {
