@@ -8,8 +8,8 @@ const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json");
 
 try {
-   if( file.get("node-dirty") === true || file.get("dirty") === true ) {
-      new Error ("dirty!");
+   if( file.get("dirty") === true ) {
+      throw new Error ("dirty!");
    }
    file.set("node-dirty", true);
 } catch (error) {
@@ -21,7 +21,7 @@ try {
    const actionHandler = new ObjectActionHandler([handlerVersion]);
 
    const actionReader = new NodeosActionReader({
-      startAtBlock: file.get("startAtBlock") === null ? 0 : file.get("startAtBlock") ,
+      //startAtBlock: file.get("startAtBlock") === null ? 0 : file.get("startAtBlock") ,
          onlyIrreversible: false,
          nodeosEndpoint: "http://127.0.0.1:9999",
    });
@@ -46,10 +46,6 @@ if (process.platform === "win32") {
   rl.on("SIGINT", function () {
    console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
 
-   file.set("node-dirty", false);
-   console.log(file.get());
-   file.save();
-
    console.log("Exiting...");
    process.exit(0);
   });
@@ -57,10 +53,7 @@ if (process.platform === "win32") {
 
 process.on('SIGINT', function () {
    console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
-
-   file.set("node-dirty", false);
    console.log(file.get());
-   file.save();
 
    console.log("Exiting...");
    process.kill(process.pid, 'SIGINT');
@@ -69,10 +62,6 @@ process.on('SIGINT', function () {
 
 process.on('SIGTERM', function () {
    console.log("\nGracefully shutting down from SIGTERM");
-
-   file.set("node-dirty", false);
    console.log(file.get());
-   file.save();
-
    process.exit(0);
 });
