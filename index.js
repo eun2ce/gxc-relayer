@@ -14,47 +14,46 @@ if( file.get("node.dirty") === true ) {
 
 (async() => {
    try {
-   const actionHandler = new ObjectActionHandler([handlerVersion]);
+      const actionHandler = new ObjectActionHandler([handlerVersion]);
 
-   const actionReader = new NodeosActionReader({
-      startAtBlock: file.get("node.startAtBlock") === null ? 0 : file.get("node.startAtBlock"),
-      onlyIrreversible: false,
-      nodeosEndpoint: "http://127.0.0.1:9999",
-   });
-   console.info("startAtBlock: ",actionReader.startAtBlock);
+      const actionReader = new NodeosActionReader({
+         startAtBlock: file.get("node.startAtBlock") === null ? 0 : file.get("node.startAtBlock"),
+         onlyIrreversible: false,
+         nodeosEndpoint: "http://127.0.0.1:9999",
+      });
+      console.info("startAtBlock: ",actionReader.startAtBlock);
 
-   const actionWatcher = new BaseActionWatcher(
+      const actionWatcher = new BaseActionWatcher(
          actionReader,
          actionHandler,
          250,
-   );
-   actionWatcher.watch();
+      );
+      actionWatcher.watch();
    } catch(e) {
       console.info({e});
    };
 })()
 
 // error handle
-process.on('uncaughtException', function (err)
-{
-	setTimeout( function() {
-		logger.error("*uncaughtException(), Exception : " + err.stack);
-		process.exit(1);
-	}, 1000);
-})
+process.on('uncaughtException', function (err) {
+   setTimeout( function() {
+      logger.error("*uncaughtException(), Exception : " + err.stack);
+      process.exit(1);
+   }, 1000);
+});
 
 if (process.platform === "win32") {
-  const rl = require("readline").createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+   const rl = require("readline").createInterface({
+      input: process.stdin,
+      output: process.stdout
+   });
 
-  rl.on("SIGINT", function () {
-   console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
-   process.kill(process.pid, 'SIGINT');
-   process.exit(0);
-  });
-}
+   rl.on("SIGINT", function () {
+      console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
+      process.kill(process.pid, 'SIGINT');
+      process.exit(0);
+   });
+};
 
 process.on('SIGINT', function () {
    console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
