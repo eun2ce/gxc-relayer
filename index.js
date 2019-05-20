@@ -28,7 +28,7 @@ if( file.get("node.dirty") === true ) {
          250,
       );
       actionWatcher.watch();
-      console.info("actionWatcher data: \n", actionWatcher);
+      console.info({ actionWatcher });
    } catch(e) {
       console.info({e});
    };

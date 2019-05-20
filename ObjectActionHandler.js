@@ -1,4 +1,4 @@
-const { AbstractActionHandler } = require("demux")
+const { AbstractActionHandler } = require("demux");
 const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json", { autosave:true});
 
@@ -18,11 +18,11 @@ const stateHistoryMaxLength = 300
 
 class ObjectActionHandler extends AbstractActionHandler {
    async handleWithState(handle) {
-      file.set("dirty", true);
+      file.set("node.dirty", true);
       file.save();
       await handle(state)
-      file.set("dirty", false);
-      file.set("startAtBlock", state.indexState.blockNumber);
+      file.set("node.dirty", false);
+      file.set("node.startAtBlock", state.indexState.blockNumber);
       file.save();
       const { blockNumber } = state.indexState
       stateHistory[blockNumber] = JSON.parse(JSON.stringify(state))
