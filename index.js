@@ -7,17 +7,14 @@ const { web3, ethContract } = require("./handlerVersions/v1/web3");
 const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json");
 const nodeFlags = require("node-flag");
+const net =require("net-socket");
 
-if(nodeFlags.isset("dirty")) {
-
-}
 if( file.get("node.dirty") === true ) {
    console.warn("=== node is dirty ! ===\n dirty is", file.get("node.dirty"));
    process.exit(1);
 }
 
-(async() => {
-   try {
+const init = async() => {
       const actionHandler = new ObjectActionHandler([handlerVersion]);
 
       const actionReader = new NodeosActionReader({
@@ -25,6 +22,7 @@ if( file.get("node.dirty") === true ) {
          onlyIrreversible: false,
          nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
       });
+   await actionReader.initialize();
 
       const actionWatcher = new BaseActionWatcher(
          actionReader,
@@ -32,11 +30,23 @@ if( file.get("node.dirty") === true ) {
          250,
       );
       actionWatcher.watch();
-      console.info({ actionWatcher });
-   } catch(e) {
-      console.info({e});
-   };
-})()
+}
+
+console.info(">>>>> Connecting to gxnode server <<<<<");
+const gxClient = net.connect(
+  9999,
+  "127.0.0.1",
+  () => {
+    console.info(">>>>> gxnode Server Connected <<<<<");
+    console.info(">>>>> Initializing GXC Watcher <<<<<");
+    init();
+
+    gxClient.on("close", () => {
+       gxClient.listen(9999);
+      throw "Gxnode Server connection closed.";
+    });
+  }
+)
 
 // error handle
 process.on('uncaughtException', function (err) {
