@@ -21,7 +21,7 @@ if( file.get("node.dirty") === true ) {
    const actionHandler = new ObjectActionHandler([handlerVersion]);
 
    const actionReader = new NodeosActionReader({
-      startAtBlock: nodeFlags.isset("dirty")? 0 : ( file.get("node.startAtBlock") === null ? 0 : file.get("node.startAtBlock") ),
+      startAtBlock: nodeFlags.isset("replay")? 1 : ( file.get("node.startAtBlock") === null ? 1 : file.get("node.startAtBlock") ),
       onlyIrreversible: true,
       nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
    });
