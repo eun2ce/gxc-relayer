@@ -9,44 +9,42 @@ const file = editJsonFile("./.gxc-data.json");
 const nodeFlags = require("node-flag");
 const net =require("net-socket");
 
+const url = String(file.get("node.nodeosEndpoint")).split(/[\s: | \/]+/);
+const gxClient = net.connect(parseInt(url[2],10), url[1]);
+
 if( file.get("node.dirty") === true ) {
    console.warn("=== node is dirty ! ===\n dirty is", file.get("node.dirty"));
    process.exit(1);
 }
 
-const init = async() => {
-      const actionHandler = new ObjectActionHandler([handlerVersion]);
+(async() => {
+   const actionHandler = new ObjectActionHandler([handlerVersion]);
 
-      const actionReader = new NodeosActionReader({
-         startAtBlock: nodeFlags.isset("dirty")? 0 : ( file.get("node.startAtBlock") === null ? 0 : file.get("node.startAtBlock") ),
-         onlyIrreversible: false,
-         nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
-      });
-   await actionReader.initialize();
+   const actionReader = new NodeosActionReader({
+      startAtBlock: nodeFlags.isset("dirty")? 0 : ( file.get("node.startAtBlock") === null ? 0 : file.get("node.startAtBlock") ),
+      onlyIrreversible: true,
+      nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
+   });
 
-      const actionWatcher = new BaseActionWatcher(
-         actionReader,
-         actionHandler,
-         250,
-      );
-      actionWatcher.watch();
-}
+   const actionWatcher = new BaseActionWatcher(
+      actionReader,
+      actionHandler,
+      250,
+   );
 
-console.info(">>>>> Connecting to gxnode server <<<<<");
-const gxClient = net.connect(
-  9999,
-  "127.0.0.1",
-  () => {
-    console.info(">>>>> gxnode Server Connected <<<<<");
-    console.info(">>>>> Initializing GXC Watcher <<<<<");
-    init();
+   gxClient.on("connect", function() {
+      actionWatcher.start();
+   });
 
-    gxClient.on("close", () => {
-       gxClient.listen(9999);
-      throw "Gxnode Server connection closed.";
-    });
-  }
-)
+   gxClient.on("error", function() {
+      console.error("not connected gxnode");
+   });
+
+   actionReader.initialize().then(() =>
+      actionWatcher.start()
+   );
+
+})()
 
 // error handle
 process.on('uncaughtException', function (err) {
@@ -64,6 +62,7 @@ if (process.platform === "win32") {
 
    rl.on("SIGINT", function () {
       console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
+      gxClient.close();
       process.kill(process.pid, 'SIGINT');
       process.exit(0);
    });
@@ -79,3 +78,4 @@ process.on('SIGTERM', function () {
    console.log("\nGracefully shutting down from SIGTERM");
    process.exit(0);
 });
+
