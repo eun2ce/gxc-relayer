@@ -13,18 +13,16 @@ function parseAccount( act ) {
    return headAct.concat(act);
 }
 
-function convertTime( unixTime ){
-   const sec = new Date(unixTime * 1000);
-}
-
 function updateNewcontractData(state, payload, blockInfo, context) {
+   console.log('\x1b[44m', 'newContract','\n\x1b[0m');
    if(payload.data.recipient[0] !== "checksum160") {
       console.info(payload.data);
       return;
    }
    const floatValue = parseFloatEth( payload.data.value );
    const recipient = parseAccount(payload.data.recipient[1]);
-   const timelock = Math.floor(Date.parse(payload.data.timelock)/1000);
+   const timelock = Math.floor(Date.parse(((payload.data.timelock)+"Z"))/1000);
+
    ethContract.methods.newContract(
       file.get("contract.vaultAddress"),
       recipient,
