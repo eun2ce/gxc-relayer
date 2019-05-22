@@ -37,14 +37,6 @@ function updateNewcontractData(state, payload, blockInfo, context) {
       gas: "0x47E7C4"
    }, (error, txID) => {
       console.info("error: ", error, "txHash: ", txID);
-      web3.eth.getTransactionReceipt(txID, function (e, data) {
-         console.log({e, data});
-         if(data.status == '0x0') {
-            console.log("The contract execution was not successful, check your transaction !");
-         } else {
-            console.log("Execution worked fine!");
-         }
-      });
    });
 }
 
