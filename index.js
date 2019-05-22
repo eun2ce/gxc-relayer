@@ -9,8 +9,12 @@ const file = editJsonFile("./.gxc-data.json");
 const nodeFlags = require("node-flag");
 const net =require("net-socket");
 
-const url = String(file.get("node.nodeosEndpoint")).split(/[\s: | \/]+/);
-const gxClient = net.connect(parseInt(url[2],10), url[1]);
+const gxClient = net.connect(file.get("node.nodeosEndpoint"));
+/*
+ * local host http://127.0.0.1:7545 ? using this
+ * const url = String(file.get("node.nodeosEndpoint")).split(/[\s: | \/]+/);
+ * const gxClient = net.connect(parseInt(url[2],10), url[1]);
+*/
 
 if( file.get("node.dirty") === true ) {
    console.warn("=== node is dirty ! ===\n dirty is", file.get("node.dirty"));
