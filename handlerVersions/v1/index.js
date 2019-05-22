@@ -18,10 +18,13 @@ function convertTime( unixTime ){
 }
 
 function updateNewcontractData(state, payload, blockInfo, context) {
+   if(payload.data.recipient[0] !== "checksum160") {
+      console.info(payload.data);
+      return;
+   }
    const floatValue = parseFloatEth( payload.data.value );
    const recipient = parseAccount(payload.data.recipient[1]);
    const timelock = Math.floor(Date.parse(payload.data.timelock)/1000);
-
    ethContract.methods.newContract(
       file.get("contract.vaultAddress"),
       recipient,
@@ -32,8 +35,16 @@ function updateNewcontractData(state, payload, blockInfo, context) {
    ).send({
       from: file.get("contract.vaultAddress"),
       gas: "0x47E7C4"
-   }, (error, result) => {
-      console.info({ error, result });
+   }, (error, txID) => {
+      console.info("error: ", error, "txHash: ", txID);
+      web3.eth.getTransactionReceipt(txID, function (e, data) {
+         console.log({e, data});
+         if(data.status == '0x0') {
+            console.log("The contract execution was not successful, check your transaction !");
+         } else {
+            console.log("Execution worked fine!");
+         }
+      });
    });
 }
 
