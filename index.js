@@ -15,7 +15,6 @@ const gxClient = net.connect(file.get("node.nodeosEndpoint"));
  * const url = String(file.get("node.nodeosEndpoint")).split(/[\s: | \/]+/);
  * const gxClient = net.connect(parseInt(url[2],10), url[1]);
 */
-
 if( file.get("node.dirty") === true ) {
    console.warn("=== node is dirty ! ===\n dirty is", file.get("node.dirty"));
    process.exit(1);
@@ -25,7 +24,7 @@ if( file.get("node.dirty") === true ) {
    const actionHandler = new ObjectActionHandler([handlerVersion]);
 
    const actionReader = new NodeosActionReader({
-      startAtBlock: nodeFlags.isset("replay")? 1 : ( file.get("node.startAtBlock") === null ? 1 : file.get("node.startAtBlock") ),
+      startAtBlock: file.get("node.startAtBlock") === null ? 1 : file.get("node.startAtBlock"),
       onlyIrreversible: true,
       nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
    });
