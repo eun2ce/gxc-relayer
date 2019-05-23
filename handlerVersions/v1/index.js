@@ -14,28 +14,31 @@ function parseAccount( act ) {
 }
 
 function updateNewcontractData(state, payload, blockInfo, context) {
-   console.log('\x1b[44m', 'newContract','\n\x1b[0m');
-   if(payload.data.recipient[0] !== "checksum160") {
+   if(payload.data.recipient[0] !== "checksum160"){
       console.info(payload.data);
       return;
    }
-   const floatValue = parseFloatEth( payload.data.value );
-   const recipient = parseAccount(payload.data.recipient[1]);
-   const timelock = Math.floor(Date.parse(((payload.data.timelock)+"Z"))/1000);
+   console.log("\n newContract \n");
 
-   ethContract.methods.newContract(
-      file.get("contract.vaultAddress"),
-      recipient,
-      file.get("contract.tokenContractId"),
-      web3.utils.toWei(floatValue, "ether"),
-      parseAccount(payload.data.hashlock),
-      timelock
-   ).send({
-      from: file.get("contract.vaultAddress"),
-      gas: "0x47E7C4"
-   }, (error, txID) => {
-      console.info("error: ", error, "txHash: ", txID);
-   });
+   const floatValue = parseFloatEth(payload.data.value);
+   const recipient = parseAccount(payload.data.recipient[1]);
+   const timelock = Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000);
+
+   (async()=> {
+      console.log("\n newContract in async \n");
+      const getContract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
+      if(getContract.sender === "0x0000000000000000000000000000000000000000"){
+         const newContract = await ethContract.methods.newContract(
+            file.get("contract.vaultAddress"),
+            recipient,
+            file.get("contract.tokenContractId"),
+            web3.utils.toWei(floatValue, "ether"),
+            parseAccount(payload.data.hashlock),
+            timelock
+         ).send({ from: file.get("contract.vaultAddress"), gas: "0x47E7C4" });
+         console.info({newContract});
+      } else { console.info({ getContract }) };
+   })()
 }
 
 const updaters = [
