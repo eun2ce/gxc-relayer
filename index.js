@@ -7,47 +7,35 @@ const { web3, ethContract } = require("./handlerVersions/v1/web3");
 const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json");
 const nodeFlags = require("node-flag");
-const net =require("net-socket");
 
-const gxClient = net.connect(file.get("node.nodeosEndpoint"));
-/*
- * local host http://127.0.0.1:7545 ? using this
- * const url = String(file.get("node.nodeosEndpoint")).split(/[\s: | \/]+/);
- * const gxClient = net.connect(parseInt(url[2],10), url[1]);
-*/
 if( file.get("node.dirty") === true ) {
    console.warn("=== node is dirty ! ===\n dirty is", file.get("node.dirty"));
    process.exit(1);
 }
 
-(async() => {
-   const actionHandler = new ObjectActionHandler([handlerVersion]);
+// main routine
+const actionHandler = new ObjectActionHandler([handlerVersion]);
+const actionReader = new NodeosActionReader({
+   startAtBlock: file.get("node.startAtBlock") === null ? 1 : file.get("node.startAtBlock"),
+   onlyIrreversible: true,
+   nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
+});
+const actionWatcher = new BaseActionWatcher(
+   actionReader,
+   actionHandler,
+   250,
+);
 
-   const actionReader = new NodeosActionReader({
-      startAtBlock: file.get("node.startAtBlock") === null ? 1 : file.get("node.startAtBlock"),
-      onlyIrreversible: true,
-      nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
-   });
+const main = (timeInterval) => {
+   if (!actionWatcher.running) {
+      actionWatcher.log.info('Starting indexing.');
+      actionWatcher.watch();
+   }
 
-   const actionWatcher = new BaseActionWatcher(
-      actionReader,
-      actionHandler,
-      250,
-   );
+   setTimeout(async () => await main(timeInterval), timeInterval);
+};
 
-   gxClient.on("connect", function() {
-      actionWatcher.start();
-   });
-
-   gxClient.on("error", function() {
-      console.error("not connected gxnode");
-   });
-
-   actionReader.initialize().then(() =>
-      actionWatcher.start()
-   );
-
-})()
+actionReader.initialize().then(() => main(10000));
 
 // error handle
 process.on('uncaughtException', function (err) {
@@ -65,7 +53,6 @@ if (process.platform === "win32") {
 
    rl.on("SIGINT", function () {
       console.log("\nGracefully shutting down from SIGINT (Ctrl+C)");
-      gxClient.close();
       process.kill(process.pid, 'SIGINT');
       process.exit(0);
    });
