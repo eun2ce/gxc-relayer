@@ -14,41 +14,31 @@ function parseAccount( act ) {
 }
 
 function updateNewcontractData(state, payload, blockInfo, context) {
-    console.log("\n newContract \n");
+   if(payload.data.recipient[0] !== "checksum160"){
+      console.info(payload.data);
+      return;
+   }
+   console.log("\n newContract \n");
 
-    if (payload.data.recipient[0] !== "checksum160") {
-        console.info(payload.data);
-        return;
-    }
+   const floatValue = parseFloatEth(payload.data.value);
+   const recipient = parseAccount(payload.data.recipient[1]);
+   const timelock = Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000);
 
-    const floatValue = parseFloatEth(payload.data.value);
-    const recipient = parseAccount(payload.data.recipient[1]);
-    const timelock = Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000);
-
-    ethContract.methods.getContract(
-        payload.data.contract_name
-    ).call({
-        from: file.get("contract.vaultAddress")
-    }, (error, result) => {
-        if (result !== null) {
-            console.info("Already existing contract: ", result);
-            return;
-        } else {
-            ethContract.methods.newContract(
-                file.get("contract.vaultAddress"),
-                recipient,
-                file.get("contract.tokenContractId"),
-                web3.utils.toWei(floatValue, "ether"),
-                parseAccount(payload.data.hashlock),
-                timelock
-            ).send({
-                from: file.get("contract.vaultAddress"),
-                gas: "0x47E7C4"
-            }, (error, txID) => {
-                console.info("error: ", error, "txHash: ", txID);
-            });
-        }
-    });
+   (async()=> {
+      console.log("\n newContract in async \n");
+      const getContract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
+      if(getContract.sender === "0x0000000000000000000000000000000000000000"){
+         const newContract = await ethContract.methods.newContract(
+            file.get("contract.vaultAddress"),
+            recipient,
+            file.get("contract.tokenContractId"),
+            web3.utils.toWei(floatValue, "ether"),
+            parseAccount(payload.data.hashlock),
+            timelock
+         ).send({ from: file.get("contract.vaultAddress"), gas: "0x47E7C4" });
+         console.info({newContract});
+      } else { console.info({ getContract }) };
+   })()
 }
 
 const updaters = [

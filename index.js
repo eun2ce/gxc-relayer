@@ -43,6 +43,31 @@ process.on("uncaughtException", function (err) {
    }, 1000);
 });
 
+(async() => {
+   const actionHandler = new ObjectActionHandler([handlerVersion]);
+
+   const actionReader = new NodeosActionReader({
+      startAtBlock: file.get("node.startAtBlock") === null ? 1 : file.get("node.startAtBlock"),
+      onlyIrreversible: true,
+      nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
+   });
+   actionReader.initialize();
+
+   const actionWatcher = new BaseActionWatcher(
+      actionReader,
+      actionHandler,
+      250,
+   );
+try{
+   const wat= await actionWatcher.watch();
+   console.info("\nwat", wat);
+   console.info("\n 3 \n");
+} catch (e) {
+   console.info({e});
+}
+})()
+
+>>>>>>> Stashed changes
 if (process.platform === "win32") {
    const rl = require("readline").createInterface({
       input: process.stdin,
