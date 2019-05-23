@@ -1,5 +1,5 @@
 const { BaseActionWatcher } = require("demux");
-const { NodeosActionReader, NodeosBlock } = require("demux-eos");
+const { NodeosActionReader } = require("demux-eos");
 const ObjectActionHandler = require("./ObjectActionHandler");
 const handlerVersion = require("./handlerVersions/v1");
 
@@ -25,20 +25,20 @@ const actionWatcher = new BaseActionWatcher(
    250,
 );
 
-const main = (timeInterval) => {
+const main = (async (timeInterval) => {
    if (!actionWatcher.running) {
       actionWatcher.log.info("Starting indexing.");
       actionWatcher.watch();
    }
    setTimeout(async () => await main(timeInterval), timeInterval);
-};
+});
 
 actionReader.initialize().then(() => main(10000));
 
 // error handle
 process.on("uncaughtException", function (err) {
    setTimeout( function() {
-      logger.error("*uncaughtException(), Exception : " + err.stack);
+      console.error("*uncaughtException(), Exception : " + err.stack);
       process.exit(1);
    }, 1000);
 });
