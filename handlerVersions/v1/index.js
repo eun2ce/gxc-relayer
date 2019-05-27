@@ -1,7 +1,27 @@
 const { web3, ethContract } = require("./web3");
+const { TextDecoder, TextEncoder } = require("util");
+const { SerialBuffer, arrayToHex, hexToUint8Array } = require("eosjs/dist/eosjs-serialize");
 
 const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json");
+
+function pad(n, width, z = '0') {
+  z = z || '0';
+  n = n + '';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
+function encodeHexName(name) {
+   const buf = new SerialBuffer({
+      textEncoder: new TextEncoder(),
+      textDecoder: new TextDecoder(),
+      array: null
+   });
+   buf.pushName(name);
+
+   const hexName = arrayToHex(buf.asUint8Array().reverse());
+   return pad(hexName, 64);
+}
 
 function parseFloatEth( value ) {
    const int_value = value.split(" ", 1);
@@ -18,16 +38,33 @@ const newcontract = async (payload) => {
    const floatValue = parseFloatEth(payload.data.value);
    const recipient = parseAccount(payload.data.recipient[1]);
    const timelock = Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000);
-
    try {
-      const result = await ethContract.methods.newContract(
-         file.get("contract.vaultAddress"),
+      const txData = await ethContract.methods.newContract(
          recipient,
          file.get("contract.tokenContractId"),
          web3.utils.toWei(floatValue, "ether"),
          parseAccount(payload.data.hashlock),
-         timelock
-      ).send({ from: file.get("contract.vaultAddress"), gas: "0x47E7C4" });
+         timelock,
+         encodedHexName(payload.data.onwer)
+      );
+
+      const encodedTxData = await txData.encodeABI();
+      const transactionObject = {
+         gas: "0x47E7C4",
+         data: encodedTxData,
+         from: file.get("contract.vaultAddress"),
+      };
+     const result = await web3.eth.accounts.signTransaction(transactionObject, file.get("contract.vaultPK"), function (error, signedTx) {
+         if (error) {
+            console.log(error);
+         } else {
+            web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+               .on('receipt', function (receipt) {
+                  console.info({receipt});
+               });
+         }
+      });
+      console.info({result});
    } catch(e) {
       console.info({e}); }
 }
