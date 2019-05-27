@@ -37,7 +37,36 @@ const newcontract = async (payload) => {
    console.info("\n newContract \n");
    const floatValue = parseFloatEth(payload.data.value);
    const recipient = parseAccount(payload.data.recipient[1]);
-   const timelock = Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000);
+   const timelock = ((Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000)) - 86400);
+   const data = "0x" + encodeHexName(payload.data.owner);
+/*
+   const newContract = await ethContract.methods.newContract(
+            recipient,
+            file.get("contract.tokenContractId"),
+            web3.utils.toWei(floatValue, "ether"),
+            parseAccount(payload.data.hashlock),
+            timelock,
+            data
+         ).send({ from:web3.eth.defaultAccount, gas: "0x47E7C4" });
+*/
+
+   try {
+      const result = await ethContract.methods.newContract(
+         recipient,
+         file.get("contract.tokenContractId"),
+         web3.utils.toWei(floatValue, "ether"),
+         parseAccount(payload.data.hashlock),
+         timelock,
+         data
+      ).send({
+         from: web3.eth.defaultAccount,
+         gas: 50000,
+         });
+      console.info({result});
+   } catch (e) {
+      console.log(e);
+   }
+/*
    try {
       const txData = await ethContract.methods.newContract(
          recipient,
@@ -45,28 +74,30 @@ const newcontract = async (payload) => {
          web3.utils.toWei(floatValue, "ether"),
          parseAccount(payload.data.hashlock),
          timelock,
-         encodedHexName(payload.data.onwer)
+         data
       );
-
       const encodedTxData = await txData.encodeABI();
+
       const transactionObject = {
-         gas: "0x47E7C4",
+         gas: file.get("contract.gas"),
          data: encodedTxData,
          from: file.get("contract.vaultAddress"),
       };
-     const result = await web3.eth.accounts.signTransaction(transactionObject, file.get("contract.vaultPK"), function (error, signedTx) {
+      await web3.eth.accounts.signTransaction(transactionObject, file.get("contract.vaultPK"), function (error, signedTx) {
          if (error) {
             console.log(error);
          } else {
-            web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+            const signedTxResult = web3.eth.sendSignedTransaction(signedTx.rawTransaction)
                .on('receipt', function (receipt) {
                   console.info({receipt});
                });
+            console.info({signedTxResult})
          }
       });
-      console.info({result});
    } catch(e) {
-      console.info({e}); }
+      console.info({e});
+   }
+*/
 }
 
 function updateNewcontractData(state, payload, blockInfo, context) {
@@ -74,13 +105,13 @@ function updateNewcontractData(state, payload, blockInfo, context) {
       console.info(payload.data);
       return;
    }
-
-   (async() => {
-      const getContract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
-      if(getContract.sender === "0x0000000000000000000000000000000000000000"){
-         (async () => await newcontract(payload))();
-      } else { console.info({ getContract }) };
-   })();
+(async () =>{
+   const getContract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
+   console.info({getContract});
+   if( getContract === null || getContract.sender === "0x0000000000000000000000000000000000000000"){
+      (async () => await newcontract(payload))();
+   } else { console.info({ getContract }) };
+})();
 }
 
 const updaters = [
