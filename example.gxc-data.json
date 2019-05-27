@@ -7,6 +7,7 @@
   "contract": {
     "web3ServerAddress": "ws://127.0.0.1:8545",
     "vaultAddress": "VAULT_ADDRESS",
+    "vaultPK": "VAULT_PK",
     "tokenContractId": "YOUR_TOKENCONTRACT_ID",
     "address": "YOUR_CONTRACT_ADDRESS",
     "abi": "//YOUR_COUNTRACT_ABI"
