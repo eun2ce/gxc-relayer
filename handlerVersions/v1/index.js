@@ -37,6 +37,19 @@ const newcontract = async (payload) => {
    const data = "0x" + encodeHexName(payload.data.owner);
 
    try {
+      const contractId = await ethContract.methods.newContract(
+         recipient,
+         file.get("contract.tokenContractId"),
+         web3.utils.toWei(floatValue, "ether"),
+         parseAccount(payload.data.hashlock),
+         timelock,
+         data
+      ).call({
+         from: web3.eth.defaultAccount,
+         gas: file.get("contract.gas"),
+      });
+      console.info({contractId});
+
       const result = await ethContract.methods.newContract(
          recipient,
          file.get("contract.tokenContractId"),
@@ -47,7 +60,7 @@ const newcontract = async (payload) => {
       ).send({
          from: web3.eth.defaultAccount,
          gas: file.get("contract.gas"),
-         });
+      });
       console.info({result});
    } catch (e) {
       console.log(e);
@@ -61,12 +74,12 @@ function updateNewcontractData(state, payload, blockInfo, context) {
    }
 
    (async () => {
-      const getContract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
-      if(getContract === null || getContract.sender === "0x0000000000000000000000000000000000000000") {
-         (async () => await newcontract(payload) )();
+      const contract = await ethContract.methods.haveContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
+      if(!contract) {
+         (async () => await newcontract(payload))();
       } else {
-         console.info({ getContract });
-      };
+         console.log(`contractId "${payload.data.contract_name}" already exists`);
+      }
    })();
 }
 
