@@ -1,9 +1,6 @@
-const { web3, ethContract } = require("./web3");
+const { web3, ethContract, file } = require("./web3");
 const { TextDecoder, TextEncoder } = require("util");
 const { SerialBuffer, arrayToHex, hexToUint8Array } = require("eosjs/dist/eosjs-serialize");
-
-const editJsonFile = require("edit-json-file");
-const file = editJsonFile("./.gxc-data.json");
 
 function pad(n, width, z = '0') {
   z = z || '0';
@@ -34,21 +31,10 @@ function parseAccount( act ) {
 }
 
 const newcontract = async (payload) => {
-   console.info("\n newContract \n");
    const floatValue = parseFloatEth(payload.data.value);
    const recipient = parseAccount(payload.data.recipient[1]);
    const timelock = ((Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000)) - 86400);
    const data = "0x" + encodeHexName(payload.data.owner);
-/*
-   const newContract = await ethContract.methods.newContract(
-            recipient,
-            file.get("contract.tokenContractId"),
-            web3.utils.toWei(floatValue, "ether"),
-            parseAccount(payload.data.hashlock),
-            timelock,
-            data
-         ).send({ from:web3.eth.defaultAccount, gas: "0x47E7C4" });
-*/
 
    try {
       const result = await ethContract.methods.newContract(
@@ -60,58 +46,28 @@ const newcontract = async (payload) => {
          data
       ).send({
          from: web3.eth.defaultAccount,
-         gas: 50000,
+         gas: file.get("contract.gas"),
          });
       console.info({result});
    } catch (e) {
       console.log(e);
    }
-/*
-   try {
-      const txData = await ethContract.methods.newContract(
-         recipient,
-         file.get("contract.tokenContractId"),
-         web3.utils.toWei(floatValue, "ether"),
-         parseAccount(payload.data.hashlock),
-         timelock,
-         data
-      );
-      const encodedTxData = await txData.encodeABI();
-
-      const transactionObject = {
-         gas: file.get("contract.gas"),
-         data: encodedTxData,
-         from: file.get("contract.vaultAddress"),
-      };
-      await web3.eth.accounts.signTransaction(transactionObject, file.get("contract.vaultPK"), function (error, signedTx) {
-         if (error) {
-            console.log(error);
-         } else {
-            const signedTxResult = web3.eth.sendSignedTransaction(signedTx.rawTransaction)
-               .on('receipt', function (receipt) {
-                  console.info({receipt});
-               });
-            console.info({signedTxResult})
-         }
-      });
-   } catch(e) {
-      console.info({e});
-   }
-*/
 }
 
 function updateNewcontractData(state, payload, blockInfo, context) {
-   if(payload.data.recipient[0] !== "checksum160"){
+   if(payload.data.recipient[0] !== "checksum160") {
       console.info(payload.data);
       return;
    }
-(async () =>{
-   const getContract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
-   console.info({getContract});
-   if( getContract === null || getContract.sender === "0x0000000000000000000000000000000000000000"){
-      (async () => await newcontract(payload))();
-   } else { console.info({ getContract }) };
-})();
+
+   (async () => {
+      const getContract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
+      if(getContract === null || getContract.sender === "0x0000000000000000000000000000000000000000") {
+         (async () => await newcontract(payload) )();
+      } else {
+         console.info({ getContract });
+      };
+   })();
 }
 
 const updaters = [

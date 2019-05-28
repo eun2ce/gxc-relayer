@@ -1,41 +1,55 @@
+const editJsonFile = require("edit-json-file");
+const file = editJsonFile("./.gxc-data.json");
+const nodeFlags = require("node-flag");
+
+function getData(data){ return file.get(data); }
+
+if( getData("node.dirty") === true ) {
+   console.warn("DIRTY!");
+   process.exit(1);
+}
+
+// WATCHER ACTION READER SETUP
 const { BaseActionWatcher } = require("demux");
 const { NodeosActionReader } = require("demux-eos");
 const ObjectActionHandler = require("./ObjectActionHandler");
 const handlerVersion = require("./handlerVersions/v1");
 
-const editJsonFile = require("edit-json-file");
-const file = editJsonFile("./.gxc-data.json");
-const nodeFlags = require("node-flag");
+// LOCAL
+// const actionReader = new NodeosActionReader(
+//    "127.0.0.1:9999",
+//    5407875
+// );
 
-if( file.get("node.dirty") === true ) {
-   console.warn("=== node is dirty ! ===\n dirty is", file.get("node.dirty"));
-   process.exit(1);
-}
-
-// main routine
-const actionHandler = new ObjectActionHandler([handlerVersion]);
 const actionReader = new NodeosActionReader({
-   startAtBlock: file.get("node.startAtBlock") === null ? 1 : file.get("node.startAtBlock"),
-   onlyIrreversible: true,
-   nodeosEndpoint: file.get("node.nodeosEndpoint") === null ? "127.0.0.1:9999" : file.get("node.nodeosEndpoint"),
+   nodeosEndpoint: getData("node.nodeosEndpoint"), // Locally hosted node needed for reasonable indexing speed
+   startAtBlock: getData("node.startAtBlock"),
 });
+
+const actionHandler = new ObjectActionHandler(
+   [handlerVersion],
+);
+
 const actionWatcher = new BaseActionWatcher(
    actionReader,
    actionHandler,
    250,
 );
 
-const main = (async (timeInterval) => {
-   if (!actionWatcher.running) {
-      actionWatcher.log.info("Starting indexing.");
+//MAIN ROUTES
+async function main(timeInterval) {
+   actionWatcher.log.info("watcher state: ", actionWatcher.running); //DEBUG
+
+   if(!actionWatcher.running) {
+      actionWatcher.log.info("STARTING INDEXING.");
       actionWatcher.watch();
    }
    setTimeout(async () => await main(timeInterval), timeInterval);
-});
+};
 
 actionReader.initialize().then(() => main(10000));
 
-// error handle
+// HANDLE ERRORS
 process.on("uncaughtException", function (err) {
    setTimeout( function() {
       console.error("*uncaughtException(), Exception : " + err.stack);
