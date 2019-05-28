@@ -1,4 +1,5 @@
 const Web3 = require("web3");
+const request = require("request");
 const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json");
 
