@@ -25,28 +25,56 @@ function parseFloatEth( value ) {
    return Number.parseFloat(int_value).toFixed(18);
 }
 
-function parseAccount( act ) {
-   const headAct = "0x";
-   return headAct.concat(act);
+function addPrefix( act, prefix = "0x" ) {
+   return prefix.concat(act);
+}
+
+const withdraw = async (payload) => {
+   try {
+      const confirmWithdraw = await ethContract.methods.withdraw(
+         payload.data.contract_name,
+         addPrefix(payload.data.preimage)
+      ).call({
+         from: web3.eth.defaultAccount,
+         gas: file.get("contract.withdraw_gas"),
+      });
+      console.info({confirmWithdraw});
+
+      await ethContract.methods.withdraw(
+         payload.data.contract_name,
+         addPrefix(payload.data.preimage)
+      ).send({
+         from: web3.eth.defaultAccount,
+         gas: file.get("contract.withdraw_gas"),
+      }, (error, result) => {
+         if(!error) {
+            console.info({result});
+         } else {
+            console.error({error});
+         }
+      });
+   } catch(error) {
+      console.error({error});
+   }
 }
 
 const newcontract = async (payload) => {
    const floatValue = parseFloatEth(payload.data.value);
-   const recipient = parseAccount(payload.data.recipient[1]);
+   const recipient = addPrefix(payload.data.recipient[1]);
    const timelock = ((Math.floor(Date.parse(((payload.data.timelock) + "Z")) / 1000)) - 86400);
-   const data = "0x" + encodeHexName(payload.data.owner);
+   const data = addPrefix(encodeHexName(payload.data.owner));
 
    try {
       const contractId = await ethContract.methods.newContract(
          recipient,
          file.get("contract.tokenContractId"),
          web3.utils.toWei(floatValue, "ether"),
-         parseAccount(payload.data.hashlock),
+         addPrefix(payload.data.hashlock),
          timelock,
          data
       ).call({
          from: web3.eth.defaultAccount,
-         gas: file.get("contract.gas"),
+         gas: file.get("contract.newcontract_gas"),
       });
       console.info({contractId});
 
@@ -54,12 +82,12 @@ const newcontract = async (payload) => {
          recipient,
          file.get("contract.tokenContractId"),
          web3.utils.toWei(floatValue, "ether"),
-         parseAccount(payload.data.hashlock),
+         addPrefix(payload.data.hashlock),
          timelock,
          data
       ).send({
          from: web3.eth.defaultAccount,
-         gas: file.get("contract.gas"),
+         gas: file.get("contract.newcontract_gas"),
       });
       console.info({result});
    } catch (e) {
@@ -76,18 +104,34 @@ function updateNewcontractData(state, payload, blockInfo, context) {
    (async () => {
       const contract = await ethContract.methods.haveContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
       if(!contract) {
-         (async () => await newcontract(payload))();
+         await newcontract(payload);
       } else {
          console.log(`contractId "${payload.data.contract_name}" already exists`);
       }
    })();
 }
 
+function updateWithdrawData(state, payload, blockInfo, context) {
+   console.info({payload});
+   (async () => {
+      const contract = await ethContract.methods.getContract(payload.data.contract_name).call({ from: file.get("contract.vaultAddress") });
+      if (contract.contractId === payload.data.contract_name && contract.withdrawn == false) {
+         await withdraw(payload);
+      } else {
+         console.info(`contractId ${payload.data.contract_name} already withdrawn`);
+      }
+   })();
+}
+
 const updaters = [
-  {
-    actionType: "gxc.htlc::newcontract",
-    apply: updateNewcontractData,
-  },
+   {
+      actionType: "gxc.htlc::newcontract",
+      apply: updateNewcontractData,
+   },
+   {
+      actionType: "gxc.htlc::withdraw",
+      apply: updateWithdrawData,
+   },
 ]
 
 

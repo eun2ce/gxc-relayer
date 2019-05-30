@@ -38,8 +38,6 @@ const actionWatcher = new BaseActionWatcher(
 
 //MAIN ROUTES
 async function main(timeInterval) {
-   actionWatcher.log.info("watcher state: ", actionWatcher.running); //DEBUG
-
    if(!actionWatcher.running) {
       actionWatcher.log.info("STARTING INDEXING.");
       actionWatcher.watch();
