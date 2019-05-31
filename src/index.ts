@@ -1,3 +1,69 @@
+import logger from "./logger";
+import editJsonFile from "edit-json-file";
+const data = require("./config/.gxc-data.json");
+
+
+const requireKeys = (obj: any, keys: string[]) => {
+   const missingKeys: string[] = [];
+
+   for (const key of keys) {
+      if (obj[key] === undefined) {
+         missingKeys.push(key);
+      }
+      logger.debug(`Load ENV [${key}]: ${obj[key]}`);
+   }
+
+   if(missingKeys.length) {
+      throw missingKeys;
+   }
+}
+
+
+require("dotenv").config();
+requireKeys(process.env, [
+   "ETH_PROVIDER",
+   "GXNODE_ENDPOINT",
+]);
+
+// WATCHER ACTION READER SETUP
+import { BaseActionWatcher, IndexingStatus } from "demux";
+import { NodeosActionReader } from "demux-eos";
+import { ObjectActionHandler } from "./ObjectActionHandler";
+import { handlerVersion } from "./handlerVersions/v1";
+
+// LOCAL
+// const actionReader = new NodeosActionReader (
+//    "127.0.0.1:9999", // gxnode defult local endpoint
+//    1                 // start at block
+// );
+
+const actionReader = new NodeosActionReader({
+   nodeosEndpoint: "http://127.0.0.1:9999",
+   startAtBlock: 1,
+});
+
+const actionHandler = new ObjectActionHandler(
+   [handlerVersion],
+);
+
+const actionWatcher = new BaseActionWatcher(
+   actionReader,
+   actionHandler,
+   250,
+);
+
+async function main(timeInterval: number) {
+   if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
+      ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
+      logger.info("WATCH STARTING INDEXING.");
+         actionWatcher.watch();
+   }
+   setTimeout(async () => await main(timeInterval), timeInterval);
+};
+
+actionReader.initialize().then(() => main(10000));
+
+/*
 const editJsonFile = require("edit-json-file");
 const file = editJsonFile("./.gxc-data.json");
 const nodeFlags = require("node-flag");
@@ -78,3 +144,4 @@ process.on('SIGTERM', function () {
    console.log("\nGracefully shutting down from SIGTERM");
    process.exit(0);
 });
+*/
