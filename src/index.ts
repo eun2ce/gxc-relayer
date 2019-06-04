@@ -1,7 +1,5 @@
 import logger from "./logger";
-import editJsonFile from "edit-json-file";
-const data = require("./config/.gxc-data.json");
-
+import * as Sentry from "@sentry/node";
 
 const requireKeys = (obj: any, keys: string[]) => {
    const missingKeys: string[] = [];
@@ -18,12 +16,17 @@ const requireKeys = (obj: any, keys: string[]) => {
    }
 }
 
-
 require("dotenv").config();
 requireKeys(process.env, [
    "ETH_PROVIDER",
+   "GXNODE_STARTATBLOCK",
    "GXNODE_ENDPOINT",
+   "SENTRY_DSN",
 ]);
+
+if (process.env.SENTRY_DNS) {
+   Sentry.init({ dsn: process.env.SENTRY_DNS });
+}
 
 // WATCHER ACTION READER SETUP
 import { BaseActionWatcher, IndexingStatus } from "demux";
@@ -39,9 +42,8 @@ import { handlerVersion } from "./handlerVersions/v1";
 
 const actionReader = new NodeosActionReader({
    nodeosEndpoint: "http://127.0.0.1:9999",
-   startAtBlock: 1,
+   startAtBlock: parseInt(process.env.GXNODE_STARTATBLOCK, 10),
 });
-
 const actionHandler = new ObjectActionHandler(
    [handlerVersion],
 );
@@ -53,6 +55,9 @@ const actionWatcher = new BaseActionWatcher(
 );
 
 async function main(timeInterval: number) {
+const blockNum = await actionReader.getLastIrreversibleBlockNumber();
+logger.warn(blockNum);
+
    if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
       ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
       logger.info("WATCH STARTING INDEXING.");
