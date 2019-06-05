@@ -5,6 +5,7 @@
    "main": "dist/index.js",
    "baseURL": "./",
    "scripts": {
+      "dev": "yarn build && NODE_ENV=develop LOG_LEVEL=info node index",
       "build": "tsc",
       "start": "cp -R src/config dist && node dist/index.js | node_modules/.bin/pino-pretty",
       "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,15 +17,16 @@
       "demux": "^4.0.0",
       "demux-eos": "^4.0.1",
       "dotenv": "^8.0.0",
-      "edit-json-file": "^1.2.1",
       "eosjs": "^20.0.0",
-      "node-flag": "^1.5.1",
       "pino": "^5.12.6",
       "pino-pretty": "^3.0.1",
-      "web3": "^1.0.0-beta.55"
+      "web3": "^1.0.0-beta.55",
+      "winston": "^3.2.1",
+      "winston-daily-rotate-file": "^3.8.0"
    },
    "devDependencies": {
       "@types/node": "^11.13.6",
+      "@types/winston": "^2.4.4",
       "tslint": "^5.16.0",
       "typescript": "3.4.5"
    }

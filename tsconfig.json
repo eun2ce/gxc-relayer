@@ -13,8 +13,5 @@
   "include": [
      "src/**/*"
   ],
-  "extends": {
-     "./config/base"
-  },
   "lib": ["es2015"]
 }

@@ -1,11 +1,8 @@
-import editJsonFile from "edit-json-file";
-import * as Config from './config/.gxc-data.json';
-import logger from "./logger";
 import { AbstractActionHandler } from "demux";
 import { NotInitializedError } from "./errors";
 import { IndexState, NextBlock, VersionedAction } from "./interfaces";
+import jsonLogger from "./jsonlogger";
 
-const file = editJsonFile(Config, {autosave: true});
 export class ObjectActionHandler extends AbstractActionHandler {
    public isInitialized: boolean = true
 
@@ -27,14 +24,10 @@ export class ObjectActionHandler extends AbstractActionHandler {
 
    // tslint:disable-next-line
    public async handleWithState(handle: (state: any) => void) {
-      logger.info(this.state.indexState.blockNumber);
-      // file.set("Dirty", true);
-      // file.save();
-      await handle(this.state);
-      // file.set("Dirty", false);
-      // file.set("startAtBlock", this.state.indexState.blockNumber);
-      // file.save();
-      const { blockNumber } = this.state.indexState
+      jsonLogger.warn(this.state.indexState.blockNumber);
+     await handle(this.state);
+      jsonLogger.info(this.state.indexState.blockNumber);
+     const { blockNumber } = this.state.indexState
       this.stateHistory[blockNumber] = JSON.parse(JSON.stringify(this.state))
       if (blockNumber > this.stateHistoryMaxLength && this.stateHistory[blockNumber - this.stateHistoryMaxLength]) {
          delete this.stateHistory[blockNumber - this.stateHistoryMaxLength]
