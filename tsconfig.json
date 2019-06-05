@@ -10,8 +10,5 @@
       "outDir": "dist",
       "resolveJsonModule": true
   },
-  "include": [
-     "src/**/*"
-  ],
   "lib": ["es2015"]
 }

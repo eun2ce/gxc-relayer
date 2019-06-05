@@ -1,4 +1,5 @@
 import logger from "../../logger";
+import Sentry from "../../sentry";
 import { web3, htlc } from "./web3";
 import { TextDecoder, TextEncoder } from "util";
 import { SerialBuffer, arrayToHex, hexToUint8Array } from "eosjs/dist/eosjs-serialize";
@@ -67,6 +68,7 @@ async function withdraw(payload: any): Promise<void> {
       });
    } catch(error) {
       logger.error(error);
+      Sentry.captureException(error);
    }
 }
 
@@ -129,6 +131,7 @@ async function updateNewcontractData(state: any, payload: any, blockInfo: any, c
       }
    } catch (error) {
       logger.error(error);
+      Sentry.captureException(error);
    }
 }
 

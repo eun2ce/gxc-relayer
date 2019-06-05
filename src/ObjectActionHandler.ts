@@ -1,7 +1,9 @@
 import { AbstractActionHandler } from "demux";
 import { NotInitializedError } from "./errors";
 import { IndexState, NextBlock, VersionedAction } from "./interfaces";
-import jsonLogger from "./jsonlogger";
+import editJsonFile from "edit-json-file";
+
+const file = editJsonFile("./data.json");
 
 export class ObjectActionHandler extends AbstractActionHandler {
    public isInitialized: boolean = true
@@ -24,9 +26,13 @@ export class ObjectActionHandler extends AbstractActionHandler {
 
    // tslint:disable-next-line
    public async handleWithState(handle: (state: any) => void) {
-      jsonLogger.warn(this.state.indexState.blockNumber);
+      file.set("Dirty", true);
+      file.set("startAtBlock", this.state.indexState.blockNumber);
+      file.save();
      await handle(this.state);
-      jsonLogger.info(this.state.indexState.blockNumber);
+      file.set("Dirty", false);
+      file.set("startAtBlock", this.state.indexState.blockNumber);
+      file.save();
      const { blockNumber } = this.state.indexState
       this.stateHistory[blockNumber] = JSON.parse(JSON.stringify(this.state))
       if (blockNumber > this.stateHistoryMaxLength && this.stateHistory[blockNumber - this.stateHistoryMaxLength]) {

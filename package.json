@@ -5,9 +5,8 @@
    "main": "dist/index.js",
    "baseURL": "./",
    "scripts": {
-      "dev": "yarn build && NODE_ENV=develop LOG_LEVEL=info node index",
       "build": "tsc",
-      "start": "cp -R src/config dist && node dist/index.js | node_modules/.bin/pino-pretty",
+      "start": "tsc && cp -R src/config dist && node dist/index.js | node_modules/.bin/pino-pretty",
       "test": "echo \"Error: no test specified\" && exit 1"
    },
    "author": "Eunhee Jo <joeun2ce@gmail.com>",
@@ -17,6 +16,7 @@
       "demux": "^4.0.0",
       "demux-eos": "^4.0.1",
       "dotenv": "^8.0.0",
+      "edit-json-file": "^1.2.1",
       "eosjs": "^20.0.0",
       "pino": "^5.12.6",
       "pino-pretty": "^3.0.1",

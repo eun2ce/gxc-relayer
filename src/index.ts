@@ -1,5 +1,6 @@
 import logger from "./logger";
-import * as Sentry from "@sentry/node";
+import Sentry from "./sentry";
+import blockFile from "./data.json";
 
 const requireKeys = (obj: any, keys: string[]) => {
    const missingKeys: string[] = [];
@@ -18,15 +19,14 @@ const requireKeys = (obj: any, keys: string[]) => {
 
 require("dotenv").config();
 requireKeys(process.env, [
-   "ETH_PROVIDER",
-   "GXNODE_STARTATBLOCK",
    "GXNODE_ENDPOINT",
-   "SENTRY_DSN",
 ]);
 
+/*
 if (process.env.SENTRY_DNS) {
    Sentry.init({ dsn: process.env.SENTRY_DNS });
 }
+*/
 
 // WATCHER ACTION READER SETUP
 import { BaseActionWatcher, IndexingStatus } from "demux";
@@ -42,8 +42,9 @@ import { handlerVersion } from "./handlerVersions/v1";
 
 const actionReader = new NodeosActionReader({
    nodeosEndpoint: process.env.GXNODE_ENDPOINT,
-   startAtBlock: parseInt(process.env.GXNODE_STARTATBLOCK, 10),
+   startAtBlock: blockFile.startAtBlock,
 });
+
 const actionHandler = new ObjectActionHandler(
    [handlerVersion],
 );
@@ -56,8 +57,6 @@ const actionWatcher = new BaseActionWatcher(
 
 async function main(timeInterval: number) {
    try{
-      const blockNum = await actionReader.getLastIrreversibleBlockNumber();
-
       if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
          ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
          logger.info("WATCH STARTING INDEXING.");
@@ -65,6 +64,7 @@ async function main(timeInterval: number) {
       }
       setTimeout(async () => await main(timeInterval), timeInterval);
    } catch (err) {
+      logger.error(err);
       Sentry.captureException(err);
    }
 };
