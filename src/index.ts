@@ -41,7 +41,7 @@ import { handlerVersion } from "./handlerVersions/v1";
 // );
 
 const actionReader = new NodeosActionReader({
-   nodeosEndpoint: "http://127.0.0.1:9999",
+   nodeosEndpoint: process.env.GXNODE_ENDPOINT,
    startAtBlock: parseInt(process.env.GXNODE_STARTATBLOCK, 10),
 });
 const actionHandler = new ObjectActionHandler(
@@ -55,18 +55,26 @@ const actionWatcher = new BaseActionWatcher(
 );
 
 async function main(timeInterval: number) {
-const blockNum = await actionReader.getLastIrreversibleBlockNumber();
-logger.warn(blockNum);
+   try{
+      const blockNum = await actionReader.getLastIrreversibleBlockNumber();
 
-   if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
-      ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
-      logger.info("WATCH STARTING INDEXING.");
+      if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
+         ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
+         logger.info("WATCH STARTING INDEXING.");
          actionWatcher.watch();
+      }
+      setTimeout(async () => await main(timeInterval), timeInterval);
+   } catch (err) {
+      Sentry.captureException(err);
    }
-   setTimeout(async () => await main(timeInterval), timeInterval);
 };
 
 actionReader.initialize().then(() => main(10000));
+
+process.on("unhandledRejection", (err: Error)=> {
+   Sentry.captureException(err);
+   logger.error(err);
+});
 
 /*
 const editJsonFile = require("edit-json-file");
