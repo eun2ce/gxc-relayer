@@ -1,17 +1,6 @@
 export interface ActionReaderOptions {
-  /**
-   * For positive values, this sets the first block that this will start at. For negative
-   * values, this will start at (most recent block + startAtBlock), effectively tailing the
-   * chain. Be careful when using this feature, as this will make your starting block dynamic.
-   */
-  startAtBlock?: number
-  /**
-   * When false (default), `getHeadBlockNumber` will load the most recent block number. When
-   * true, `getHeadBlockNumber` will return the block number of the most recent irreversible
-   * block. Keep in mind that `getHeadBlockNumber` is an abstract method and this functionality
-   * is the responsibility of the implementing class.
-   */
-  onlyIrreversible?: boolean
+ startAtBlock?: number
+ onlyIrreversible?: boolean
 }
 
 export interface Block {
