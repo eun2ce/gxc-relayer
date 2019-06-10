@@ -106,6 +106,7 @@ async function newcontract(payload: any): Promise<void> {
       logger.info(result);
    } catch (error) {
       logger.error(error);
+      Sentry.captureException(error);
    }
 }
 
@@ -151,6 +152,7 @@ async function updateWithdrawData(state: any, payload: any, blockInfo: any, cont
    }
    } catch (error) {
       logger.error(error);
+      Sentry.captureException(error);
    }
 }
 
