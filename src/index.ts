@@ -35,7 +35,7 @@ const actionWatcher = new BaseActionWatcher(
 
 async function main(timeInterval: number) {
    try{
-      logger.warn("reconnection");
+      logger.info(new Date().toISOString(), " : check gxc-relayer alive");
       if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
          ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
          logger.info("WATCH STARTING INDEXING.");
