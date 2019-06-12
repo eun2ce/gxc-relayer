@@ -12,6 +12,7 @@
    "author": "Eunhee Jo <joeun2ce@gmail.com>",
    "license": "MIT",
    "dependencies": {
+      "@sentry/integrations": "^5.4.1",
       "@sentry/node": "5.4.0",
       "demux": "^4.0.0",
       "demux-eos": "^4.0.1",
