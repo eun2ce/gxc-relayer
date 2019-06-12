@@ -2,19 +2,33 @@
    "name": "gxc-relayer",
    "version": "1.0.0",
    "description": "",
-   "main": "index.js",
+   "main": "dist/index.js",
    "baseURL": "./",
    "scripts": {
+      "build": "tsc",
+      "start": "tsc && cp -R src/config dist && node dist/index.js | node_modules/.bin/pino-pretty",
       "test": "echo \"Error: no test specified\" && exit 1"
    },
    "author": "Eunhee Jo <joeun2ce@gmail.com>",
    "license": "MIT",
    "dependencies": {
+      "@sentry/integrations": "^5.4.1",
+      "@sentry/node": "5.4.0",
       "demux": "^4.0.0",
       "demux-eos": "^4.0.1",
+      "dotenv": "^8.0.0",
       "edit-json-file": "^1.2.1",
-      "node-flag": "^1.5.1",
+      "eosjs": "^20.0.0",
       "pino": "^5.12.6",
-      "web3": "^1.0.0-beta.55"
+      "pino-pretty": "^3.0.1",
+      "web3": "^1.0.0-beta.55",
+      "winston": "^3.2.1",
+      "winston-daily-rotate-file": "^3.8.0"
+   },
+   "devDependencies": {
+      "@types/node": "^11.13.6",
+      "@types/winston": "^2.4.4",
+      "tslint": "^5.16.0",
+      "typescript": "3.4.5"
    }
 }
