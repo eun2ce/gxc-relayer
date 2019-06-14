@@ -3,10 +3,9 @@
    "version": "1.0.0",
    "description": "",
    "main": "dist/index.js",
-   "baseURL": "./",
    "scripts": {
-      "build": "tsc",
-      "start": "tsc && cp -R src/config dist && node dist/index.js | node_modules/.bin/pino-pretty",
+      "build": "tsc && cp -R src/config dist",
+      "start": "cat src/config/data.json && node dist/index.js | node_modules/.bin/pino-pretty",
       "test": "echo \"Error: no test specified\" && exit 1"
    },
    "author": "Eunhee Jo <joeun2ce@gmail.com>",

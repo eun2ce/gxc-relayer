@@ -2,8 +2,8 @@ import { AbstractActionHandler } from "demux";
 import { NotInitializedError } from "./errors";
 import { IndexState, NextBlock, VersionedAction } from "./interfaces";
 import editJsonFile from "edit-json-file";
-
-const file = editJsonFile("./data.json");
+//const file = editJsonFile(`${__dirname}/config/data.json`);
+const file = editJsonFile(`${__dirname}/../src/config/data.json`);
 
 export class ObjectActionHandler extends AbstractActionHandler {
    public isInitialized: boolean = true

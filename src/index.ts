@@ -1,6 +1,6 @@
 import logger from "./logger";
 import SCPush from "./statuscake";
-import blockFile from "./data.json";
+import blockFile from "./../src/config/data.json";
 import Sentry from "./sentry";
 
 //GET CONFIG
@@ -34,12 +34,23 @@ const actionWatcher = new BaseActionWatcher(
 );
 
 async function main(timeInterval: number) {
+   logger.info(new Date().toISOString(),`  :[${actionWatcher.info.indexingStatus}] check gxc-relayer alive`);
+   try {
+      actionWatcher.start();
+   } catch (err) {
+      //Sentry.captureException(err);
+      logger.error(err);
+   } finally {
+      setTimeout(async () => await main(timeInterval), timeInterval);
+   }
+   /*
    try{
       logger.info(new Date().toISOString(), " : check gxc-relayer alive");
+      logger.info(actionHandler.info);
       if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
          ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
          logger.info("WATCH STARTING INDEXING.");
-         actionWatcher.watch();
+         actionWatcher.start();
       }
       setTimeout(async () => await SCPush(), 180000);
    } catch (err) {
@@ -48,6 +59,7 @@ async function main(timeInterval: number) {
    } finally {
       setTimeout(async () => await main(timeInterval), timeInterval);
    }
+    */
 };
 
 actionReader.initialize().then(() => main(10000));
