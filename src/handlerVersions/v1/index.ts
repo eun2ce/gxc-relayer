@@ -39,7 +39,7 @@ const confirmTransaction = async (transactionHash: string) => {
       console.info("transaction is fail .. \n transactionHash: %s, transactionReceipt: %o",transactionHash, transactionReceipt);
    }
 }
-*/
+ */
 
 async function withdraw(payload: any): Promise<void> {
    try {
@@ -49,8 +49,12 @@ async function withdraw(payload: any): Promise<void> {
       ).call({
          from: web3.eth.defaultAccount,
          gas: process.env.WITHDRAW_GAS,
+      }, (error, result) => {
+         if(error) {
+            throw new Error (error);
+         }
+         logger.info(result);
       });
-      logger.info(`withdraw method call: ${confirmWithdraw}`);
 
       await htlc.methods.withdraw(
          payload.data.contract_name,
@@ -58,13 +62,19 @@ async function withdraw(payload: any): Promise<void> {
       ).send({
          from: web3.eth.defaultAccount,
          gas: process.env.WITHDRAW_GAS,
-      }, (error, result) => {
-         if(!error) {
-            logger.info({result});
-         } else {
-            logger.error({error});
-         }
-      });
+      })
+         .on('transactionHash', (hash) => {
+            logger.info(hash);
+         })
+         .on('receipt', (receipt) => {
+            logger.info(receipt);
+         })
+         .on('confirmation', (confirmationNumber, receipt) => {
+            logger.info(confirmationNumber, receipt);
+         })
+         .on('error', (error)=> {
+            throw new Error (error);
+         });
    } catch(error) {
       Sentry.captureException(error);
       logger.error(error);
@@ -88,8 +98,14 @@ async function newcontract(payload: any): Promise<void> {
       ).call({
          from: web3.eth.defaultAccount,
          gas: process.env.NEWCONTRACT_GAS,
+      }, (error, result) => {
+         if(error) {
+            throw new Error (error);
+         }
+         logger.info(result);
       });
-      logger.info(`newcontract method call: ${contractId}`);
+
+      // logger.info(`newcontract method call: ${contractId}`);
 
       const result = await htlc.methods.newContract(
          recipient,
@@ -101,8 +117,19 @@ async function newcontract(payload: any): Promise<void> {
       ).send({
          from: web3.eth.defaultAccount,
          gas: process.env.NEWCONTRACT_GAS,
-      });
-      logger.info(result);
+      })
+         .on('transactionHash', (hash) => {
+            logger.info(hash);
+         })
+         .on('receipt', (receipt) => {
+            logger.info(receipt);
+         })
+         .on('confirmation', (confirmationNumber, receipt) => {
+            logger.info(confirmationNumber, receipt);
+         })
+         .on('error', (error)=> {
+            throw new Error (error);
+         });
    } catch (error) {
       Sentry.captureException(error);
       logger.error(error);
@@ -122,7 +149,12 @@ async function updateNewcontractData(state: any, payload: any, blockInfo: any, c
          {
             from: process.env.TOKEN_ADDRESS,
          }
-      );
+         ,(error, result) => {
+            if(error) {
+               throw new Error (error);
+            }
+            logger.info(result);
+         });
 
       if(!contract) {
          await newcontract(payload);
@@ -138,17 +170,22 @@ async function updateNewcontractData(state: any, payload: any, blockInfo: any, c
 async function updateWithdrawData(state: any, payload: any, blockInfo: any, context: any): Promise<void> {
    logger.info(payload);
    try {
-   const contract = await htlc.methods.getContract(payload.data.contract_name)
-      .call(
-         {
-            from: process.env.VAULT_ADDRESS,
-         }
-      );
-   if (contract.contractId === payload.data.contract_name && contract.withdrawn == false) {
-      await withdraw(payload);
-   } else {
-      logger.warn(`contractId ${payload.data.contract_name} already withdrawn`);
-   }
+      const contract = await htlc.methods.getContract(payload.data.contract_name)
+         .call(
+            {
+               from: process.env.VAULT_ADDRESS,
+            }, (error, result)=> {
+               if(error) {
+                  throw new Error(error);
+               }
+               logger.info(result);
+            });
+
+      if (contract.contractId === payload.data.contract_name && contract.withdrawn == false) {
+         await withdraw(payload);
+      } else {
+         logger.warn(`contractId ${payload.data.contract_name} already withdrawn`);
+      }
    } catch (error) {
       Sentry.captureException(error);
       logger.error(error);
@@ -167,18 +204,18 @@ const updaters = [
 ]
 
 function logUpdate(payload, blockInfo, context) {
-  //console.info("State updated:\n", JSON.stringify(context.stateCopy, null, 2))
+   //console.info("State updated:\n", JSON.stringify(context.stateCopy, null, 2))
 }
 
 const effects = [
-  {
-    actionType: "gxc.token::transfer",
-    run: logUpdate,
-  },
+   {
+      actionType: "gxc.token::transfer",
+      run: logUpdate,
+   },
 ]
 
 export const handlerVersion = {
-  versionName: "v1",
-  updaters,
-  effects,
+   versionName: "v1",
+   updaters,
+   effects,
 }
