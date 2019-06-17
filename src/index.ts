@@ -11,25 +11,19 @@ import { BaseActionWatcher, IndexingStatus } from "demux";
 import { MongoActionReader } from "demux-eos";
 import { ObjectActionHandler } from "./ObjectActionHandler";
 import { handlerVersion } from "./handlerVersions/v1";
-
-// LOCAL
-// const actionReader = new NodeosActionReader (
-//    "127.0.0.1:9999", // gxnode defult local endpoint
-//    1                 // start at block
-// );
 /*
 const actionReader = new NodeosActionReader({
    nodeosEndpoint: process.env.GXNODE_ENDPOINT,
    startAtBlock: blockFile.startAtBlock,
 });
- */
+*/
+
 const actionReader = new MongoActionReader({
    dbName: process.env.MONGO_DB || "GXC",
-   mongoEndpoint: process.env.MONGO_ENDPOINT || "mongodb://",
-   onlyIrreversible: false,
+   mongoEndpoint: process.env.MONGO_ENDPOINT || "mongodb://127.0.0.1:27017",
    startAtBlock: blockFile.startAtBlock,
 });
-
+logger.info({actionReader});
 const actionHandler = new ObjectActionHandler(
    [handlerVersion],
 );
@@ -45,7 +39,7 @@ async function main(timeInterval: number) {
    try {
       actionWatcher.start();
    } catch (err) {
-      //Sentry.captureException(err);
+      Sentry.captureException(err);
       logger.error(err);
    } finally {
       setTimeout(async () => await main(timeInterval), timeInterval);
