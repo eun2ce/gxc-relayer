@@ -8,7 +8,7 @@ require("dotenv").config();
 
 // WATCHER ACTION READER SETUP
 import { BaseActionWatcher, IndexingStatus } from "demux";
-import { NodeosActionReader } from "demux-eos";
+import { MongoActionReader } from "demux-eos";
 import { ObjectActionHandler } from "./ObjectActionHandler";
 import { handlerVersion } from "./handlerVersions/v1";
 
@@ -17,9 +17,16 @@ import { handlerVersion } from "./handlerVersions/v1";
 //    "127.0.0.1:9999", // gxnode defult local endpoint
 //    1                 // start at block
 // );
-
+/*
 const actionReader = new NodeosActionReader({
    nodeosEndpoint: process.env.GXNODE_ENDPOINT,
+   startAtBlock: blockFile.startAtBlock,
+});
+ */
+const actionReader = new MongoActionReader({
+   dbName: process.env.MONGO_DB || "GXC",
+   mongoEndpoint: process.env.MONGO_ENDPOINT || "mongodb://",
+   onlyIrreversible: false,
    startAtBlock: blockFile.startAtBlock,
 });
 
@@ -43,23 +50,6 @@ async function main(timeInterval: number) {
    } finally {
       setTimeout(async () => await main(timeInterval), timeInterval);
    }
-   /*
-   try{
-      logger.info(new Date().toISOString(), " : check gxc-relayer alive");
-      logger.info(actionHandler.info);
-      if ( actionWatcher.info.indexingStatus === IndexingStatus.Initial
-         ||actionWatcher.info.indexingStatus === IndexingStatus.Stopped ) {
-         logger.info("WATCH STARTING INDEXING.");
-         actionWatcher.start();
-      }
-      setTimeout(async () => await SCPush(), 180000);
-   } catch (err) {
-      Sentry.captureException(err);
-      logger.error(err);
-   } finally {
-      setTimeout(async () => await main(timeInterval), timeInterval);
-   }
-    */
 };
 
 actionReader.initialize().then(() => main(10000));
