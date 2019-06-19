@@ -27,19 +27,36 @@ function addPrefix(act: string, prefix = "0x" ): string {
    return prefix.concat(act);
 }
 
-/*
- * NOT USED
-const confirmTransaction = async (transactionHash: string) => {
-   console.info("confirm: \n", transactionHash);
-   const transactionReceipt = await web3.eth.getTransactionReceipt(transactionHash);
-   if(transactionReceipt === null) {
-      console.info("transaction is pending .. \n transactionHash: %s, transactionReceipt: %o",transactionHash, transactionReceipt);
-   }
-   if(transactionReceipt.status === false) {
-      console.info("transaction is fail .. \n transactionHash: %s, transactionReceipt: %o",transactionHash, transactionReceipt);
+async function refund(payload: any): Promise<void> {
+   try {
+      htlc.methods.refund(
+         payload.data.contract_name
+      ).call({
+         from: web3.eth.defaultAccount,
+         gas: process.env.NEWCONTRACT_GAS
+      }, (error, result) => {
+         if(error) {
+            logger.error(error);
+         }
+         logger.info(result);
+      });
+
+      htlc.methods.refund(
+         payload.data.contract_name
+      ).send({
+         from: web3.eth.defaultAccount,
+         gas: process.env.NEWCONTRACT_GAS
+      }, (error, result) => {
+         if(error) {
+            logger.error(error);
+         }
+         logger.info(result);
+      });
+   } catch (error) {
+      Sentry.captureException(error);
+      logger.error(error);
    }
 }
- */
 
 async function withdraw(payload: any): Promise<void> {
    try {
@@ -51,7 +68,7 @@ async function withdraw(payload: any): Promise<void> {
          gas: process.env.WITHDRAW_GAS,
       }, (error, result) => {
          if(error) {
-            throw new Error (error);
+            logger.error(error);
          }
          logger.info(result);
       });
@@ -63,9 +80,9 @@ async function withdraw(payload: any): Promise<void> {
          from: web3.eth.defaultAccount,
          gas: process.env.WITHDRAW_GAS,
       }).on('transactionHash', (hash) => {
-            logger.info(hash);
+            logger.info("transaction Hash", hash);
          }).on('receipt', (receipt) => {
-            logger.info(receipt);
+            logger.info("receipt", receipt);
          }).on('error', console.error);
    } catch(error) {
       Sentry.captureException(error);
@@ -97,8 +114,6 @@ async function newcontract(payload: any): Promise<void> {
          logger.info(result);
       });
 
-      // logger.info(`newcontract method call: ${contractId}`);
-
       htlc.methods.newContract(
          recipient,
          process.env.TOKEN_ADDRESS,
@@ -111,10 +126,10 @@ async function newcontract(payload: any): Promise<void> {
          gas: process.env.NEWCONTRACT_GAS,
       })
          .on('transactionHash', (hash) => {
-            logger.info(hash);
+            logger.info("transacion Hash: ", hash);
          })
          .on('receipt', (receipt) => {
-            logger.info(receipt);
+            logger.info("receipt", receipt);
          }).on('error', console.error);
    } catch (error) {
       Sentry.captureException(error);
@@ -186,6 +201,10 @@ const updaters = [
       actionType: "gxc.htlc::withdraw",
       apply: updateWithdrawData,
    },
+   {
+      actionType: "gxc.htlc::refund",
+      apply: refund,
+   }
 ]
 
 function logUpdate(payload, blockInfo, context) {
