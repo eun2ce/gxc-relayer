@@ -27,7 +27,8 @@ function addPrefix(act: string, prefix = "0x" ): string {
    return prefix.concat(act);
 }
 
-async function refund(payload: any): Promise<void> {
+async function refund(state: any, payload: any, blockInfo: any, context: any): Promise<void> {
+   logger.info(payload.data);
    try {
       htlc.methods.refund(
          payload.data.contract_name
